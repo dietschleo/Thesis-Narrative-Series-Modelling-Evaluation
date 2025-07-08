@@ -381,46 +381,38 @@ class EvaluationMultiModel:
 
         results = []
 
-        for eval_model, model_name in zip(eval_models, model_names):
-            # Determine start index using model's training boundary if not set
-            if start_date is None:
-                start = pd.to_datetime(eval_model.model_dict['last_train_date']) + pd.DateOffset(months=1)
-            else:
-                start = pd.to_datetime(start_date)
 
+        for eval_model, model_name in zip(eval_models, model_names):
             X_all = eval_model.scaled_df[eval_model.used_features]
-            #print("X_all.shape",X_all.shape)
             y_all = eval_model.scaled_df[eval_model.actual_cpi_col]
-            #print("y_all.shape",y_all.shape)
             valid_mask = ~X_all.isna().any(axis=1) & y_all.notna()
             X_all = X_all.loc[valid_mask]
-            #print("X_all.shape after valid_mask",X_all.shape)
             y_all = y_all.loc[valid_mask]
-            #print("y_all.shape after valid_mask",y_all.shape)
 
-            # Ensure datetime index
-            X_all.index = pd.to_datetime(eval_model.scaled_df.loc[valid_mask, 'date'], dayfirst=True)
-            y_all.index = X_all.index  # Already aligned
+            # Fix the index to match 'date'
+            dates = pd.to_datetime(eval_model.scaled_df.loc[valid_mask, 'date'], dayfirst=True)
+            X_all.index = dates
+            y_all.index = dates
 
-
-            X_window = X_all.loc[X_all.index >= start].head(window_size)
-            y_window = y_all.loc[X_window.index]
-            print(eval_model.scaled_df['date'].head(20).tolist())
-
-            if len(X_window) < window_size:
-                print(f"⚠️ Only {len(X_window)} valid rows for model {model_name} from {start} — skipping.")
+            try:
+                y_pred = eval_model.predict(X_all)
+            except Exception as e:
+                print(f"Prediction failed for model {model_name}: {e}")
                 continue
 
-            y_pred = eval_model.predict(X_window)
-            rmse = np.sqrt(mean_squared_error(y_window, y_pred))
-            is_test = int(X_window.index[0] >= eval_model.out_of_sample_start)
+            for date, y_true, y_hat in zip(y_all.index, y_all.values, y_pred):
+                is_test = int(date >= eval_model.out_of_sample_start)
+                results.append({
+                    'date': date,
+                    'model': model_name,
+                    'actual': y_true,
+                    'predicted': y_hat,
+                    'error': y_hat - y_true,
+                    'squared_error': (y_hat - y_true) ** 2,
+                    'is_test': is_test
+                })
 
-            results.append({
-                'date': X_window.index[0],
-                'model': model_name,
-                'error': rmse,
-                'is_test': is_test
-            })
+        df_results = pd.DataFrame(results)
+        df_results["rmse"] = np.sqrt(df_results["squared_error"])
 
-        return pd.DataFrame(results)
-
+        return df_results
