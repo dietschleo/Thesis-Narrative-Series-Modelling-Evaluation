@@ -166,10 +166,19 @@ class Model:
         X_train_numeric = X_train[numeric_columns].fillna(0)
         X_test_numeric = X_test[numeric_columns].fillna(0) if test_size > 0 else None
 
+        # Fit selector on training data
         selector = VarianceThreshold(threshold=0.0)
         X_train_reduced = selector.fit_transform(X_train_numeric)
         X_test_reduced = selector.transform(X_test_numeric) if X_test_numeric is not None else None
         selected_columns = numeric_columns[selector.get_support()]
+        dropped_columns = numeric_columns[~selector.get_support()]
+
+        # Print dropped columns
+        if len(dropped_columns) > 0:
+            print(f"🧹 Dropped {len(dropped_columns)} low-variance columns:")
+            print(dropped_columns.tolist())
+        else:
+            print("✅ No columns dropped by variance thresholding.")
 
         if self.scaler == "Standard":
             scaler = StandardScaler()

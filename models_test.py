@@ -289,7 +289,7 @@ class EvaluationSingleModel:
 
         # Actuals
         actuals = df_window[self.actual_cpi_col].values
-        print(actuals, predictions)
+        #print(actuals, predictions)
         # Compute RMSE
         rmse = np.sqrt(mean_squared_error(actuals, predictions))
         return rmse
@@ -326,6 +326,9 @@ class EvaluationSingleModel:
 class EvaluationMultiModel:
     def __init__(self, df: pd.DataFrame, folder, scaler: str = 'StandardScaler'):
         self.df = df.copy()
+        self.df['date'] = pd.to_datetime(self.df['date'], dayfirst=True)
+        self.df['date'] = self.df['date'].dt.to_period('M').dt.to_timestamp()
+
         self.folder = folder
         self.scaler = scaler #not used so far (since each model is scaled individually)
         self.eval_models = []
@@ -386,22 +389,23 @@ class EvaluationMultiModel:
                 start = pd.to_datetime(start_date)
 
             X_all = eval_model.scaled_df[eval_model.used_features]
-            print("X_all.shape",X_all.shape)
+            #print("X_all.shape",X_all.shape)
             y_all = eval_model.scaled_df[eval_model.actual_cpi_col]
-            print("y_all.shape",y_all.shape)
+            #print("y_all.shape",y_all.shape)
             valid_mask = ~X_all.isna().any(axis=1) & y_all.notna()
             X_all = X_all.loc[valid_mask]
-            print("X_all.shape after valid_mask",X_all.shape)
+            #print("X_all.shape after valid_mask",X_all.shape)
             y_all = y_all.loc[valid_mask]
-            print("y_all.shape after valid_mask",y_all.shape)
+            #print("y_all.shape after valid_mask",y_all.shape)
 
             # Ensure datetime index
-            X_all.index = pd.to_datetime(X_all.index)
-            y_all.index = X_all.index
+            X_all.index = pd.to_datetime(eval_model.scaled_df.loc[valid_mask, 'date'], dayfirst=True)
+            y_all.index = X_all.index  # Already aligned
+
 
             X_window = X_all.loc[X_all.index >= start].head(window_size)
             y_window = y_all.loc[X_window.index]
-
+            print(eval_model.scaled_df['date'].head(20).tolist())
 
             if len(X_window) < window_size:
                 print(f"⚠️ Only {len(X_window)} valid rows for model {model_name} from {start} — skipping.")
