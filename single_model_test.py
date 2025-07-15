@@ -25,6 +25,7 @@ class EvaluationSingleModel:
         self.out_of_sample_start = pd.to_datetime(out_of_sample_start)
         self.actual_cpi_col = actual_cpi_col
         self.scaled_df = None
+        self.mute = mute
         self.disable_scaling = disable_scaling
 
         if 'date' not in df.columns:
@@ -62,7 +63,7 @@ class EvaluationSingleModel:
         X_reduced = selector.fit_transform(numeric)
         selected_columns = np.array(self.feature_names)[selector.get_support()]
         df_reduced = pd.DataFrame(X_reduced, columns=selected_columns, index=numeric.index)
-        print("df_reduced.columns:",df_reduced.columns,"df_reduced.index:", df_reduced.index )
+        #print("df_reduced.columns:",df_reduced.columns,"df_reduced.index:", df_reduced.index )
 
         ## SCALING           
         if self.disable_scaling:
@@ -154,10 +155,11 @@ class EvaluationSingleModel:
 
                 #so that the model doesn't expect thousands of features for LassoCV or ElasticNetCV
         if isinstance(self.model, (LassoCV, ElasticNetCV, LassoLarsIC)):
-            warnings.warn(
-                "Model is of type LassoCV or ElasticNetCV. Falling back to manual dot product prediction.",
-                UserWarning
-            )
+            if not self.mute:
+                warnings.warn(
+                    "Model is of type LassoCV or ElasticNetCV. Falling back to manual dot product prediction.",
+                    UserWarning
+                )
             return self.manual_predict_from_coefs(self.non_zero_coefs, X)
         
 

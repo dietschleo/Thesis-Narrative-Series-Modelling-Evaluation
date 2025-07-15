@@ -179,7 +179,8 @@ class Model:
             print(f"🧹 Dropped {len(dropped_columns)} low-variance columns:")
             print(dropped_columns.tolist())
         else:
-            print("✅ No columns dropped by variance thresholding.")
+            if self.auto_print is True:
+                print("✅ No columns dropped by variance thresholding.")
 
         if self.scaler == "Standard":
             scaler = StandardScaler()
@@ -305,7 +306,8 @@ class Model:
             tscv = TimeSeriesSplit(n_splits=int(1 / self.testsize))
             train_index, test_index = list(tscv.split(X))[-1]
             last_train_date = X.iloc[train_index].index[-1] if len(train_index) > 0 else None
-            print(f"Last train date: {last_train_date}", f"self.testsize: {self.testsize}")
+            if self.auto_print is True:
+                print(f"Last train date: {last_train_date}", f"self.testsize: {self.testsize}")
 
         # Add additional info to model_output
         model_output['startdate'] = self.startdate
@@ -319,7 +321,8 @@ class Model:
                 raise ValueError('"save_to_dir" must be a list of [folder, filename]')
             folder, filename = save_to_dir
             self.save_model_package(model_output, folder, filename)
-            print(f"Model saved to {folder}/{filename}.")
+            if self.auto_print is True:
+                print(f"Model saved to {folder}/{filename}.")
         return model_output
 
     def backtest_fixed_window_with_refit(self):
@@ -421,6 +424,9 @@ class Model:
         X_train, X_test, y_train, y_test, feature_names = self.preprocess_data(X, y, random_state)
         test_size = self.testsize
         y_train.plot()
+        if len(y_train)< 100:
+            print("☢WARNING mismatch in the dates, model might be invalid")
+            print(y_train)
         model = LassoCV(cv=TimeSeriesSplit(n_splits=cv), random_state=random_state, max_iter=100000)
         model.fit(X_train, y_train)
 
