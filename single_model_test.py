@@ -61,7 +61,8 @@ class EvaluationSingleModel:
         selector = VarianceThreshold(threshold=0.0)
         X_reduced = selector.fit_transform(numeric)
         selected_columns = np.array(self.feature_names)[selector.get_support()]
-        df_reduced = pd.DataFrame(X_reduced, columns=selected_columns)
+        df_reduced = pd.DataFrame(X_reduced, columns=selected_columns, index=numeric.index)
+        print("df_reduced.columns:",df_reduced.columns,"df_reduced.index:", df_reduced.index )
 
         ## SCALING           
         if self.disable_scaling:
@@ -72,7 +73,9 @@ class EvaluationSingleModel:
                 whitened = self.zca_whiten(df_reduced)
                 whitened_df = pd.DataFrame(whitened, columns=df_reduced.columns, index=df_reduced.index)
                 # Explicitly add 'date' and other non-feature columns back
-                self.scaled_df = pd.concat([whitened_df, self.df[['date', self.actual_cpi_col]]], axis=1)
+                extra_cols = self.df.loc[whitened_df.index, ['date', self.actual_cpi_col]]
+                self.scaled_df = pd.concat([whitened_df, extra_cols], axis=1)
+                #self.scaled_df = pd.concat([whitened_df, self.df[['date', self.actual_cpi_col]]], axis=1) #old
                 
 
             #print(model_dict['scaler'])
@@ -82,12 +85,19 @@ class EvaluationSingleModel:
                     print("No adequate scaler found in model_dict, resorting to StandardScaler.")
                 # 1. Fit on in-sample data only
                 scaler = StandardScaler()
-                scaler.fit(df_reduced.query('date < @self.out_of_sample_start')[self.feature_names])
+                # Get indices for in-sample period using the original DataFrame (which includes 'date')
+                in_sample_indices = self.df[self.df['date'] < self.out_of_sample_start].index
+
+                # Select the corresponding rows from df_reduced
+                scaler.fit(df_reduced.loc[in_sample_indices, self.feature_names])
+
                 # 2. Transform full dataset on used features
                 scaled_values = scaler.transform(df_reduced[self.feature_names])
                 scaled_df = pd.DataFrame(scaled_values, columns=self.feature_names, index=df_reduced.index)
                 # 3. Combine scaled features with original non-feature data (like 'date', target, etc.)
-                self.scaled_df = pd.concat([scaled_df, df_reduced.drop(columns=self.feature_names)], axis=1)
+                extra_cols = self.df.loc[scaled_df.index, ['date', self.actual_cpi_col]]
+                self.scaled_df = pd.concat([scaled_df, extra_cols], axis=1)
+                #self.scaled_df = pd.concat([scaled_df, df_reduced.drop(columns=self.feature_names)], axis=1) #old
 
         #print(self.scaled_df)
         if not mute:

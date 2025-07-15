@@ -16,6 +16,7 @@ import pandas as pd
 class Model:
     def __init__(self, df: pd.DataFrame):
         self.df = df
+        self.df['date'] = pd.to_datetime(self.df['date'], dayfirst=True)
         self.lead = 1 #predict in next month inflation by default
         self.y = self.df.set_index('date')['delta_log_cpi_next_month_lag0'].shift(-(self.lead - 1))
         self.profile = None
@@ -217,7 +218,6 @@ class Model:
         return X_zca
 
 
-
     def save_model_package(self, package, folder, filename):
         os.makedirs(folder, exist_ok=True)
         save_path = os.path.join(folder, filename)
@@ -228,7 +228,7 @@ class Model:
 ###########################################################################################################
 ### Launcher functions  ###################################################################################
 
-    def run_model(self, random_state=42, cv=10):
+    def run_model(self, random_state=42, cv=10, save_to_dir=None):
         
         X = self.df_to_use()
         y = self.y_to_use(X)
@@ -314,7 +314,12 @@ class Model:
         model_output['scaler'] = self.scaler
 
         print(f"{self.profilename} {self.modeltype} model fitted from {self.startdate.date()} to {window_end.date()} with lag = {self.maxlag} months and lead = {self.lead} months.")
-
+        if save_to_dir is not None:
+            if not isinstance(save_to_dir, list) or len(save_to_dir) != 2:
+                raise ValueError('"save_to_dir" must be a list of [folder, filename]')
+            folder, filename = save_to_dir
+            self.save_model_package(model_output, folder, filename)
+            print(f"Model saved to {folder}/{filename}.")
         return model_output
 
     def backtest_fixed_window_with_refit(self):
