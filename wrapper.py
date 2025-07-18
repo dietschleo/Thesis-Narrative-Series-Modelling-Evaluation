@@ -49,6 +49,7 @@ class Model:
     def set_lead(self, lead: int):
         self.lead = lead
         self.y = self.df.set_index('date')['delta_log_cpi_next_month_lag0'].shift(-(self.lead - 1))
+        self.y = self.y.fillna(0)
         return self
     
     def set_maxlag(self, maxlag: int):
@@ -59,16 +60,19 @@ class Model:
     
     def set_profile(self, profile):
         def create_inputlist():
-            narratives_and_composite = ['std_SD_composite_AU', 'std_SI_composite_AU', 'std_DD_composite_AU', 'std_DI_composite_AU', 'std_netD_composite_AU', 'std_netS_composite_AU', 'std_SD_aluminium_AU', 'std_SI_aluminium_AU', 'std_DD_aluminium_AU', 'std_DI_aluminium_AU', 'std_netD_aluminium_AU', 'std_netS_aluminium_AU', 'std_SD_cattle_AU', 'std_SI_cattle_AU', 'std_DD_cattle_AU', 'std_DI_cattle_AU', 'std_netD_cattle_AU', 'std_netS_cattle_AU', 'std_SD_cocoa_AU', 'std_SI_cocoa_AU', 'std_DD_cocoa_AU', 'std_DI_cocoa_AU', 'std_netD_cocoa_AU', 'std_netS_cocoa_AU', 'std_SD_coffee_AU', 'std_SI_coffee_AU', 'std_DD_coffee_AU', 'std_DI_coffee_AU', 'std_netD_coffee_AU', 'std_netS_coffee_AU', 'std_SD_copper_AU', 'std_SI_copper_AU', 'std_DD_copper_AU', 'std_DI_copper_AU', 'std_netD_copper_AU', 'std_netS_copper_AU', 'std_SD_corn_AU', 'std_SI_corn_AU', 'std_DD_corn_AU', 'std_DI_corn_AU', 'std_netD_corn_AU', 'std_netS_corn_AU', 'std_SD_cotton_AU', 'std_SI_cotton_AU', 'std_DD_cotton_AU', 'std_DI_cotton_AU', 'std_netD_cotton_AU', 'std_netS_cotton_AU', 'std_SD_gasoil_AU', 'std_SI_gasoil_AU', 'std_DD_gasoil_AU', 'std_DI_gasoil_AU', 'std_netD_gasoil_AU', 'std_netS_gasoil_AU', 'std_SD_gasoline_AU', 'std_SI_gasoline_AU', 'std_DD_gasoline_AU', 'std_DI_gasoline_AU', 'std_netD_gasoline_AU', 'std_netS_gasoline_AU', 'std_SD_gold_AU', 'std_SI_gold_AU', 'std_DD_gold_AU', 'std_DI_gold_AU', 'std_netD_gold_AU', 'std_netS_gold_AU', 'std_SD_heatingoil_AU', 'std_SI_heatingoil_AU', 'std_DD_heatingoil_AU', 'std_DI_heatingoil_AU', 'std_netD_heatingoil_AU', 'std_netS_heatingoil_AU', 'std_SD_hog_AU', 'std_SI_hog_AU', 'std_DD_hog_AU', 'std_DI_hog_AU', 'std_netD_hog_AU', 'std_netS_hog_AU', 'std_SD_natgas_AU', 'std_SI_natgas_AU', 'std_DD_natgas_AU', 'std_DI_natgas_AU', 'std_netD_natgas_AU', 'std_netS_natgas_AU', 'std_SD_nickel_AU', 'std_SI_nickel_AU', 'std_DD_nickel_AU', 'std_DI_nickel_AU', 'std_netD_nickel_AU', 'std_netS_nickel_AU', 'std_SD_oil_AU', 'std_SI_oil_AU', 'std_DD_oil_AU', 'std_DI_oil_AU', 'std_netD_oil_AU', 'std_netS_oil_AU', 'std_SD_silver_AU', 'std_SI_silver_AU', 'std_DD_silver_AU', 'std_DI_silver_AU', 'std_netD_silver_AU', 'std_netS_silver_AU', 'std_SD_soybean_AU', 'std_SI_soybean_AU', 'std_DD_soybean_AU', 'std_DI_soybean_AU', 'std_netD_soybean_AU', 'std_netS_soybean_AU', 'std_SD_sugar_AU', 'std_SI_sugar_AU', 'std_DD_sugar_AU', 'std_DI_sugar_AU', 'std_netD_sugar_AU', 'std_netS_sugar_AU', 'std_SD_wheat_AU', 'std_SI_wheat_AU', 'std_DD_wheat_AU', 'std_DI_wheat_AU', 'std_netD_wheat_AU', 'std_netS_wheat_AU', 'std_SD_zinc_AU', 'std_SI_zinc_AU', 'std_DD_zinc_AU', 'std_DI_zinc_AU', 'std_netD_zinc_AU', 'std_netS_zinc_AU']
-            controls = ['.DXY (TRDPRC_1)', 'Mich', 'Employment_cost', 'NFIB', 'Fed_total_asset', 'import_prices', 'MOODCAAA Index', 'MOODCBAA Index', 'US oil MCRSTUS1', 'OPEC oil production', 'World oil production', 'proxy OECD crude oil inventories', 'Output gap', 'Filly Fed', 'SCFI', 'Wu Xia Shadow Rate', 'Fed Effective funds rate', 'Wu Xia Spliced Policy Rate', 'SnP500', 'USCPIZ1Y', 'USCPIZ2Y', 'USCPIZ5Y', 'USCPIZ10Y', 'Employment absolute change', 'govt_expenditures', 'job_vacancies', 'fed M2', 'PMI Survey', 'GSCI_CrudeOil', 'GSCI_BrentCrude', 'GSCI_UnleadedGasoline', 'GSCI_HeatingOil', 'GSCI_Gasoil', 'GSCI_NaturalGas', 'GSCI_Aluminum', 'GSCI_Copper', 'GSCI_Lead', 'GSCI_Nickel', 'GSCI_Zinc', 'GSCI_Gold', 'GSCI_Silver', 'GSCI_WheatCBOT', 'GSCI_WheatKansas', 'GSCI_Corn', 'GSCI_Soybeans', 'GSCI_Cotton', 'GSCI_Sugar', 'GSCI_Coffee', 'GSCI_Cocoa', 'GSCI_LiveCattle', 'GSCI_FeederCattle', 'GSCI_LeanHogs', 'GSCI_Composite', 'Tbill10Y', 'Tbill1mo', 'VIX']
-            narratives = [n for n in narratives_and_composite if "composite" not in n]
-            narratives_net_only = [n for n in narratives if all(x not in n for x in ["SI", "SD", "DI", "DD"])]
-            narratives_ID_only = [n for n in narratives if any(x in n for x in ["SI", "SD", "DI", "DD"])]
-            BM_composite = [n for n in narratives_and_composite if "composite" in n]
-            BM_composite_net_only = [n for n in BM_composite if all(x not in n for x in ["SI", "SD", "DI", "DD"])]
+            BM_poormans = ['delta_log_cpi_next_month']
+            narratives_and_composite = BM_poormans + ['std_SD_composite_AU', 'std_SI_composite_AU', 'std_DD_composite_AU', 'std_DI_composite_AU', 'std_netD_composite_AU', 'std_netS_composite_AU', 'std_SD_aluminium_AU', 'std_SI_aluminium_AU', 'std_DD_aluminium_AU', 'std_DI_aluminium_AU', 'std_netD_aluminium_AU', 'std_netS_aluminium_AU', 'std_SD_cattle_AU', 'std_SI_cattle_AU', 'std_DD_cattle_AU', 'std_DI_cattle_AU', 'std_netD_cattle_AU', 'std_netS_cattle_AU', 'std_SD_cocoa_AU', 'std_SI_cocoa_AU', 'std_DD_cocoa_AU', 'std_DI_cocoa_AU', 'std_netD_cocoa_AU', 'std_netS_cocoa_AU', 'std_SD_coffee_AU', 'std_SI_coffee_AU', 'std_DD_coffee_AU', 'std_DI_coffee_AU', 'std_netD_coffee_AU', 'std_netS_coffee_AU', 'std_SD_copper_AU', 'std_SI_copper_AU', 'std_DD_copper_AU', 'std_DI_copper_AU', 'std_netD_copper_AU', 'std_netS_copper_AU', 'std_SD_corn_AU', 'std_SI_corn_AU', 'std_DD_corn_AU', 'std_DI_corn_AU', 'std_netD_corn_AU', 'std_netS_corn_AU', 'std_SD_cotton_AU', 'std_SI_cotton_AU', 'std_DD_cotton_AU', 'std_DI_cotton_AU', 'std_netD_cotton_AU', 'std_netS_cotton_AU', 'std_SD_gasoil_AU', 'std_SI_gasoil_AU', 'std_DD_gasoil_AU', 'std_DI_gasoil_AU', 'std_netD_gasoil_AU', 'std_netS_gasoil_AU', 'std_SD_gasoline_AU', 'std_SI_gasoline_AU', 'std_DD_gasoline_AU', 'std_DI_gasoline_AU', 'std_netD_gasoline_AU', 'std_netS_gasoline_AU', 'std_SD_gold_AU', 'std_SI_gold_AU', 'std_DD_gold_AU', 'std_DI_gold_AU', 'std_netD_gold_AU', 'std_netS_gold_AU', 'std_SD_heatingoil_AU', 'std_SI_heatingoil_AU', 'std_DD_heatingoil_AU', 'std_DI_heatingoil_AU', 'std_netD_heatingoil_AU', 'std_netS_heatingoil_AU', 'std_SD_hog_AU', 'std_SI_hog_AU', 'std_DD_hog_AU', 'std_DI_hog_AU', 'std_netD_hog_AU', 'std_netS_hog_AU', 'std_SD_natgas_AU', 'std_SI_natgas_AU', 'std_DD_natgas_AU', 'std_DI_natgas_AU', 'std_netD_natgas_AU', 'std_netS_natgas_AU', 'std_SD_nickel_AU', 'std_SI_nickel_AU', 'std_DD_nickel_AU', 'std_DI_nickel_AU', 'std_netD_nickel_AU', 'std_netS_nickel_AU', 'std_SD_oil_AU', 'std_SI_oil_AU', 'std_DD_oil_AU', 'std_DI_oil_AU', 'std_netD_oil_AU', 'std_netS_oil_AU', 'std_SD_silver_AU', 'std_SI_silver_AU', 'std_DD_silver_AU', 'std_DI_silver_AU', 'std_netD_silver_AU', 'std_netS_silver_AU', 'std_SD_soybean_AU', 'std_SI_soybean_AU', 'std_DD_soybean_AU', 'std_DI_soybean_AU', 'std_netD_soybean_AU', 'std_netS_soybean_AU', 'std_SD_sugar_AU', 'std_SI_sugar_AU', 'std_DD_sugar_AU', 'std_DI_sugar_AU', 'std_netD_sugar_AU', 'std_netS_sugar_AU', 'std_SD_wheat_AU', 'std_SI_wheat_AU', 'std_DD_wheat_AU', 'std_DI_wheat_AU', 'std_netD_wheat_AU', 'std_netS_wheat_AU', 'std_SD_zinc_AU', 'std_SI_zinc_AU', 'std_DD_zinc_AU', 'std_DI_zinc_AU', 'std_netD_zinc_AU', 'std_netS_zinc_AU']
+            controls =  BM_poormans +  ['.DXY (TRDPRC_1)', 'Mich', 'Employment_cost', 'NFIB', 'Fed_total_asset', 'import_prices', 'MOODCAAA Index', 'MOODCBAA Index', 'US oil MCRSTUS1', 'OPEC oil production', 'World oil production', 'proxy OECD crude oil inventories', 'Output gap', 'Filly Fed', 'SCFI', 'Wu Xia Shadow Rate', 'Fed Effective funds rate', 'Wu Xia Spliced Policy Rate', 'SnP500', 'USCPIZ1Y', 'USCPIZ2Y', 'USCPIZ5Y', 'USCPIZ10Y', 'Employment absolute change', 'govt_expenditures', 'job_vacancies', 'fed M2', 'PMI Survey', 'GSCI_CrudeOil', 'GSCI_BrentCrude', 'GSCI_UnleadedGasoline', 'GSCI_HeatingOil', 'GSCI_Gasoil', 'GSCI_NaturalGas', 'GSCI_Aluminum', 'GSCI_Copper', 'GSCI_Lead', 'GSCI_Nickel', 'GSCI_Zinc', 'GSCI_Gold', 'GSCI_Silver', 'GSCI_WheatCBOT', 'GSCI_WheatKansas', 'GSCI_Corn', 'GSCI_Soybeans', 'GSCI_Cotton', 'GSCI_Sugar', 'GSCI_Coffee', 'GSCI_Cocoa', 'GSCI_LiveCattle', 'GSCI_FeederCattle', 'GSCI_LeanHogs', 'GSCI_Composite', 'Tbill10Y', 'Tbill1mo', 'VIX']
+            narratives =  [n for n in narratives_and_composite if "composite" not in n]
+            narratives_net_only =  BM_poormans + [n for n in narratives if all(x not in n for x in ["SI", "SD", "DI", "DD"])]
+            narratives_ID_only =  BM_poormans + [n for n in narratives if any(x in n for x in ["SI", "SD", "DI", "DD"])]
+            BM_composite =  BM_poormans + [n for n in narratives_and_composite if "composite" in n]
+            BM_composite_net_only =  BM_poormans + [n for n in BM_composite if all(x not in n for x in ["SI", "SD", "DI", "DD"])]
             all_features = narratives + controls
+            narratives = BM_poormans + narratives #append 
 
             inputlist = {
+                "BM_poormans": BM_poormans,
                 "narratives_and_composite": narratives_and_composite,
                 "controls": controls,
                 "narratives": narratives,
@@ -115,7 +119,12 @@ class Model:
             if any(profile_key in col for profile_key in self.profile)
             and any(col.endswith(lag) for lag in allowed_lags)
         ]
+        #add another lag for 'next month' inflation
+        filtered_columns.append(f"delta_log_cpi_next_month_lag{self.maxlag + 2}")
         df = df[filtered_columns]
+        #make sure we don't allow next month inflation to be used to predict itself
+        if 'delta_log_cpi_next_month_lag0' in df.columns:
+            df = df.drop(columns=['delta_log_cpi_next_month_lag0'])
         
         df.index = pd.to_datetime(df.index)
         window_end = self.compute_window_end()
@@ -128,8 +137,6 @@ class Model:
             self.y.index = pd.to_datetime(self.y.index)
 
         #print(self.y.index.equals(df.index))  # should now be True if values match
-        #print(self.y.index, df.index)
-        #print(self.y.index.name, df.index.name)
         y_filtered = self.y.loc[df.index]
         return y_filtered
 
@@ -329,7 +336,7 @@ class Model:
 
         # Prepare output folder
         runtime = datetime.now().strftime("%Y%m%d_%H%M%S")
-        folder_name = f"{self.modeltype}_{self.profilename}_lag{self.maxlag}_lead{self.lead}_{runtime}"
+        folder_name = f"{self.modeltype}_{self.profilename}_lag{self.maxlag+1}_lead{self.lead}_{runtime}"
         os.makedirs(folder_name, exist_ok=True)
 
         # Prepare for iteration

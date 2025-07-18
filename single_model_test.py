@@ -192,6 +192,9 @@ class EvaluationSingleModel:
 
         # Subset and compute predictions
         X_sub = X[non_zero_coefs.index]
+        #print("X_sub.shape:", X_sub.shape)
+        #print(X_sub)
+        #print("non_zero_coefs.shape:", non_zero_coefs.shape)
         return X_sub.values @ non_zero_coefs.values
 
     def zca_whiten(self, X, epsilon=1e-5):
@@ -215,7 +218,6 @@ class EvaluationSingleModel:
             raise ValueError("❌ ZCA whitening produced invalid values (NaN or Inf).")
 
         return X_zca
-
 
     def plot_predictions(self, show_actual=True):
         """Interactive plot of model predictions (and optionally actuals), using dashed lines after out-of-sample start date."""
