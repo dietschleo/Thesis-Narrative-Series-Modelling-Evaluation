@@ -82,7 +82,7 @@ class EvaluationSingleModel:
             #print(model_dict['scaler'])
 
             else: #resorting to standard scaler
-                if model_dict['scaler'] not in ['standard', 'StandardScaler']:
+                if model_dict['scaler'] not in ['standard', 'StandardScaler'] and not mute:
                     print("No adequate scaler found in model_dict, resorting to StandardScaler.")
                 # 1. Fit on in-sample data only
                 scaler = StandardScaler()

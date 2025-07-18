@@ -78,7 +78,7 @@ class EvaluationMultiModel:
 
         coef_df = pd.DataFrame(coef_dict).T.sort_index()
         coef_df = coef_df.loc[:, (coef_df != 0).any(axis=0)]  # Drop all-zero columns
-
+        self.coef_df = coef_df
         return coef_df
 
     def plot_coef_heatmap(self, coef_df: pd.DataFrame = None, title: str = "Non-Zero Coefficient Heatmap (White=Zero)"):
